@@ -1,6 +1,6 @@
-import React, { Fragment } from "react";
-import ReactDOM from "react-dom";
-import styled from "styled-components";
+import React, { Fragment } from 'react';
+import ReactDOM from 'react-dom';
+import styled from 'styled-components';
 
 const StyledModal = styled.div`
   position: fixed;
@@ -20,8 +20,8 @@ const StyledModal = styled.div`
   }
 `;
 
-const StyledBackrop = styled.div.attrs(props => ({
-  onClick: props.onClose
+const StyledBackrop = styled.div.attrs((props) => ({
+  onClick: props.onClose,
 }))`
   position: fixed;
   top: 0;
@@ -32,7 +32,7 @@ const StyledBackrop = styled.div.attrs(props => ({
   background-color: rgba(0, 0, 0, 0.75);
 `;
 
-const ModalOverlay = props => {
+const ModalOverlay = (props) => {
   return (
     <StyledModal>
       <div className="">{props.children}</div>
@@ -42,14 +42,11 @@ const ModalOverlay = props => {
 
 const portalElement = document.getElementById('overlays');
 
-const Modal = props => {
+const Modal = (props) => {
   return (
     <Fragment>
       {ReactDOM.createPortal(<StyledBackrop onClose={props.onClose} />, portalElement)}
-      {ReactDOM.createPortal(
-        <ModalOverlay>{props.children}</ModalOverlay>,
-        portalElement
-      )}
+      {ReactDOM.createPortal(<ModalOverlay>{props.children}</ModalOverlay>, portalElement)}
     </Fragment>
   );
 };

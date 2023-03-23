@@ -1,8 +1,9 @@
-import React, { useContext } from "react";
-import styled from "styled-components";
-import Modal from "../UI/Modal";
-import CartContext from "../../store/cart-context";
-import CartItem from "./CartItem";
+import React, { useContext, useState } from 'react';
+import styled from 'styled-components';
+import Modal from '../UI/Modal';
+import CartContext from '../../store/cart-context';
+import CartItem from './CartItem';
+import Checkout from './Checkout';
 
 const StyledCartItems = styled.ul`
   list-style: none;
@@ -51,20 +52,41 @@ const StyledCartActions = styled.div`
   }
 `;
 
-const Cart = props => {
+const Cart = (props) => {
+  const [isCheckout, setIsCheckout] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [didSubmit, setDidSubmit] = useState(false);
+
   const cartContext = useContext(CartContext);
 
-  const cartItemRemoveHandler = id => {
+  const cartItemRemoveHandler = (id) => {
     cartContext.removeItem(id);
   };
 
-  const cartItemAddHandler = item => {
+  const cartItemAddHandler = (item) => {
     cartContext.addItem({ ...item, amount: 1 });
+  };
+
+  const orderHandler = () => {
+    setIsCheckout(true);
+  };
+
+  const submitOrderHandler = async (userData) => {
+    setIsSubmitting(true);
+
+    await fetch('https://react-food-order-app-8f357-default-rtdb.firebaseio.com/orders.json', {
+      method: 'POST',
+      body: JSON.stringify({ user: userData, orderedItems: cartContext.items }),
+    });
+
+    setIsSubmitting(false);
+    setDidSubmit(true);
+    cartContext.clearCart();
   };
 
   const cartItems = (
     <StyledCartItems>
-      {cartContext.items.map(item => (
+      {cartContext.items.map((item) => (
         <CartItem
           key={item.id}
           name={item.name}
@@ -77,19 +99,47 @@ const Cart = props => {
     </StyledCartItems>
   );
 
-  const totalAmount = `$${cartContext.totalAmount.toFixed(2)}`;
-
-  return (
-    <Modal onClose={props.onClose}>
+  const cartModalContent = (
+    <>
       {cartItems}
       <StyledCartTotal>
         <span>Total Amount</span>
-        <span>{totalAmount}</span>
+        <span>{`$${cartContext.totalAmount.toFixed(2)}`}</span>
       </StyledCartTotal>
+      {isCheckout && <Checkout onConfirm={submitOrderHandler} onCancel={props.onClose} />}
+      {!isCheckout && (
+        <StyledCartActions>
+          <button className="button--alt" onClick={props.onClose}>
+            Close
+          </button>
+          {cartContext.items.length > 0 && (
+            <button className="button" onClick={orderHandler}>
+              Order
+            </button>
+          )}
+        </StyledCartActions>
+      )}
+    </>
+  );
+
+  const isSubmittingModalContent = <p>Sending order data...</p>;
+
+  const didSubmitModalContent = (
+    <>
+      <p>Successfully sent the order!</p>
       <StyledCartActions>
-        <button className="button--alt" onClick={props.onClose}>Close</button>
-        {cartContext.items.length > 0 && <button className="button">Order</button>}
+        <button className="button" onClick={props.onClose}>
+          Close
+        </button>
       </StyledCartActions>
+    </>
+  );
+
+  return (
+    <Modal onClose={props.onClose}>
+      {!isSubmitting && !didSubmit && cartModalContent}
+      {isSubmitting && isSubmittingModalContent}
+      {!isSubmitting && didSubmit && didSubmitModalContent}
     </Modal>
   );
 };
